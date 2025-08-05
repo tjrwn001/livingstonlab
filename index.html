@@ -1,0 +1,2363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Livingston Lab - Queen Mary University of London</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: #2c3e50;
+            background: linear-gradient(135deg, #0D3273 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header & Navigation */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #0D3273;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: #2c3e50;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            background: transparent;
+        }
+
+        .nav-link:hover {
+            background: linear-gradient(135deg, #0D3273, #764ba2);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(103, 126, 234, 0.3);
+        }
+
+        .nav-link.active {
+            background: linear-gradient(135deg, #0D3273, #764ba2);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(103, 126, 234, 0.4);
+        }
+
+        /* Main Content */
+        main {
+            margin-top: 80px;
+            background: white;
+            border-radius: 30px 30px 0 0;
+            min-height: calc(100vh - 80px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        main::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #0D3273, #764ba2, #667eea);
+            background-size: 200% 100%;
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { background-position: 200% 0; }
+            50% { background-position: -200% 0; }
+        }
+
+        .page {
+            display: none;
+            padding: 3rem 0;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Home Page Styles */
+        .hero {
+            text-align: center;
+            padding: 4rem 0;
+            background: linear-gradient(135deg, rgba(103, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+            border-radius: 20px;
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(103, 126, 234, 0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #0D3273, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+            animation: titleGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            from { filter: drop-shadow(0 0 5px rgba(103, 126, 234, 0.3)); }
+            to { filter: drop-shadow(0 0 20px rgba(103, 126, 234, 0.6)); }
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            color: #5a6c7d;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        .university-tag {
+            display: inline-block;
+            background: linear-gradient(135deg, #0D3273, #764ba2);
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 25px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        .university-tag a {
+  color: white;           /* keep the text white */
+  text-decoration: none;  /* remove underline */
+  display: inline-block;  /* ensure padding applies nicely */
+}
+
+.university-tag a:hover {
+  color: white;           /* stay white on hover */
+  text-decoration: none;  /* no underline on hover */
+}
+
+
+        .university-tag:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .pi-section {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 3rem;
+            align-items: center;
+            margin: 4rem 0;
+            padding: 3rem;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .pi-image {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, #0D3273, #764ba2);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .pi-image img,
+.event-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+        .pi-image:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .event-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(103, 126, 234, 0.1);
+        }
+
+        .event-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .event-image {
+            height: 200px;
+            background: linear-gradient(45deg, #0D3273, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .event-content {
+            padding: 1.5rem;
+        }
+
+        .news-section {
+            background: linear-gradient(135deg, rgba(103, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+            border-radius: 20px;
+            padding: 3rem;
+            margin: 3rem 0;
+        }
+
+        .news-item {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 1rem;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #0D3273;
+            transition: all 0.3s ease;
+        }
+
+        .news-item:hover {
+            transform: translateX(10px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .news-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border: 2px solid #0D3273;
+            border-radius: 25px;
+            display: inline-block;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .news-link:hover {
+            background: #0D3273;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        /* Research Page */
+        .research-area {
+            background: white;
+            margin: 2rem 0;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .research-area:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .research-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            padding: 3rem;
+            align-items: center;
+        }
+
+        .research-image {
+            height: 250px;
+            background: #fff;
+            /*linear-gradient(135deg, #667eea, #764ba2);*/
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .research-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.research-image:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+}
+
+        /* People Page */
+        .people-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            padding: 2rem 0;
+        }
+
+        .person-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(103, 126, 234, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .person-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #0D3273, #764ba2);
+        }
+
+        .person-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+        }
+
+        .person-image {
+  width: 120px;               /* same as before */
+  height: 120px;
+  border-radius: 50%;         /* circle */
+  overflow: hidden;           /* hide any bleed */
+  margin: 0 auto 1.5rem;      /* center & space below */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  display: flex;              /* center img if needed */
+  align-items: center;
+  justify-content: center;
+}
+
+        .person-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;          /* fill & crop to radius */
+  display: block;
+}
+
+.person-card:hover .person-image {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+}
+
+
+#alumniMapStandalone,
+.leaflet-container {
+  width: 100% !important;
+  height: 500px !important;
+  max-width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+
+.leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+
+        /* Publications Page */
+        .publication-item {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin: 2rem 0;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border-left: 6px solid #0D3273;
+        }
+
+        .publication-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .publication-content {
+            display: grid;
+            grid-template-columns: 1fr 200px;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .publication-image {
+            height: 150px;
+            background: linear-gradient(135deg, #0D3273, #764ba2);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .publication-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;       /* or 'contain' if you’d rather see the whole image */
+  display: block;
+}
+
+.publication-image:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+
+        .doi-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #0D3273, #764ba2);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .doi-link:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+          /* News Page */
+          .news-list {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        .news-list-item {
+            padding: 1.5rem 0;
+            border-bottom: 1px solid rgba(103, 126, 234, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .news-list-item:hover {
+            background: rgba(103, 126, 234, 0.05);
+            padding-left: 1rem;
+            border-radius: 10px;
+        }
+
+        .news-date {
+            color: #0D3273;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .news-expand-btn {
+            background: linear-gradient(135deg, #0D3273, #764ba2);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            display: inline-block;
+        }
+
+        .news-expand-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(103, 126, 234, 0.3);
+        }
+
+        .news-details {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid rgba(103, 126, 234, 0.1);
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .news-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .news-image {
+    height: 250px;
+    background: linear-gradient(135deg, #0D3273, #764ba2);
+    border-radius: 15px;
+    overflow: hidden;   /* ensures the image crops to the rounded corners */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+        .news-image:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+
+        .news-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;  /* scale and crop to fill the container */
+    display: block;     /* removes any inline whitespace */
+}
+
+        .news-full-content h4 {
+            color: #0D3273;
+            font-size: 1.3rem;
+            margin: 2rem 0 1rem 0;
+            font-weight: 700;
+        }
+
+        .news-full-content p {
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+
+
+        /* Contact Page */
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            margin: 2rem 0;
+        }
+
+        .contact-card {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .contact-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #0D3273, #764ba2);
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-menu {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .pi-section {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .research-content {
+                grid-template-columns: 1fr;
+            }
+
+            .publication-content {
+                grid-template-columns: 1fr;
+            }
+
+            .contact-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Additional animations */
+        .fade-in {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, #0D3273, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(90deg, #0D3273, #764ba2);
+            border-radius: 2px;
+        }
+
+        /* mini “Team / Alumni” tabs */
+.people-submenu {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.people-submenu button {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0D3273;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: color 0.3s, border-color 0.3s;
+}
+.people-submenu button.active {
+  color: #764ba2;
+  border-color: #764ba2;
+}
+
+/* hide/show sections */
+.people-section {
+  display: none;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  padding: 2rem 0;
+}
+.people-section.active {
+  display: grid;
+}
+
+.cluster-icon {
+  background: #764ba2; /* change color if needed */
+  color: white;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1rem;
+  box-shadow: 0 0 0 4px white, 0 4px 15px rgba(0,0,0,0.2);
+  transition: transform 0.2s;
+}
+
+.cluster-icon:hover {
+  transform: scale(1.1);
+}
+
+
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <a href="#" class="logo">Livingston Lab</a>
+            <ul class="nav-menu">
+                <li><a href="#" class="nav-link active" data-page="home">Home</a></li>
+                <li><a href="#" class="nav-link" data-page="research">Research</a></li>
+                <li><a href="#" class="nav-link" data-page="people">People</a></li>
+                <li><a href="#" class="nav-link" data-page="publications">Publications</a></li>
+                <li><a href="#" class="nav-link" data-page="news">News</a></li>
+                <li><a href="#" class="nav-link" data-page="opportunities">Opportunities</a></li>
+                <li><a href="#" class="nav-link" data-page="contact">Contact</a></li>
+                <li><a href="#" class="nav-link" data-page="game">Game</a></li>
+
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Home Page -->
+        <div id="home" class="page active">
+            <div class="container">
+                <div class="hero">
+                    <div class="hero-content">
+                        <h1>Livingston Lab</h1>
+                        <p>Advancing the frontiers of scientific research through innovative methodologies and collaborative excellence.</p>
+                        <div class="university-tag">
+                            <a href="https://qmul.ac.uk" target="_blank" rel="noopener">
+                              Queen Mary University of London
+                            </a>
+                          </div>
+                          
+                    </div>
+                </div>
+
+                <div class="pi-section fade-in">
+                    <div class="pi-image">
+                        <img src="andrew.jpg" alt="Andrew Livingston">
+                      </div>
+                    <div>
+                        <h2>About Our Group</h2>
+                        <p style="margin-bottom: 1.5rem; font-size: 1.1rem; line-height: 1.8;">
+                            The Livingston Lab at Queen Mary University of London is a dynamic, interdisciplinary research team committed to advancing membrane science and chemical engineering. We focus on the design, fabrication and fundamental understanding of solvent-stable polymer membranes—particularly thin-film composites for organic solvent nanofiltration (OSN)—to achieve high-flux, molecularly selective separations in challenging liquid-phase environments. By integrating experimental techniques (such as interfacial polymerization) with theoretical modeling, we tailor membrane pore structures and surface chemistries to solve real-world problems in pharmaceuticals, fine chemicals and beyond.
+                        </p>
+                        <p style="font-size: 1.1rem; line-height: 1.8;">
+                            Under the leadership of Prof. Andrew G. Livingston FRS FREng, our group fosters a collaborative, creative and excellence-driven atmosphere, translating lab discoveries into practical applications and successful spin-outs (Evonik MET Ltd. and Exactmer Ltd.) that benefit both industry and society.
+                        </p>
+                    </div>
+                </div>
+
+                <h2 class="section-title">Group Events</h2>
+                <div class="events-grid">
+                        <div class="event-card">
+                            <div class="event-image">
+                                <img src="Synhisel.jpeg" alt="SynHiSel">
+                              </div>
+                            <div class="event-content">
+                                <h3>QMUL SynHiSel Researchers Workshop</h3>
+                                <p> The group hosted SynHiSel Researchers' Workshop at QMUL sharing research ideas and collaborations</p>
+                            </div>
+                        </div>
+                        
+                    <div class="event-card">
+                        <div class="event-image">
+                            <img src="IMG_6113.jpg" alt="Group Christmas Dinner">
+                          </div>
+                        <div class="event-content">
+                            <h3>Christmas Dinner 2024</h3>
+                            <p>Our yearly christams gathering! This year's secret santa gift theme was slippers! </p>
+                        </div>
+                    </div>
+                    
+                    <div class="event-card">
+                        <div class="event-image">
+                            <img src="IMG_4706.jpg" alt="EuroMembrane">
+                         </div>
+                        <div class="event-content">
+                            <h3>EuroMembrane 2024</h3>
+                            <p> The group attended EuroMembrane 2024, all postdocs and PhD students presented their work. Well done to Zhiwei for his award!</p>
+                        </div>
+                    </div>
+                    </div>
+                
+
+                <div class="news-section">
+                    <h2 class="section-title">Recent News</h2>
+                    <div class="news-item">
+                        <h3>Professor Andrew Livingston Celebrated for Double Honours in Chemical Engineering</h3>
+                        <p>Congratulations to our Professor Andrew Livingston for two significant accolades: a prestigious Lifetime Achievement Award from the World Chemical Engineering Council (WCEC) and a substantial £1.7M grant from UKRI's Engineering and Physical Sciences Research Council (EPSRC).</p>
+                        <a href="#" class="news-link" onclick="showPage('news')">More Details</a>
+                    </div>
+                    <div class="news-item">
+                        <h3>Dr. Zhiwei Jiang & Dr. Chunchun Ye</h3>
+                        <p>Two postdoctoral fellows, Dr. Zhiwei Jiang and Dr. Chunchun Ye has received Nanyang Associate Professorship (NAP) positions at Nanyang Technology University. Congratulations to them both! </p>
+                        <a href="#" class="news-link" onclick="showPage('news')">More Details</a>
+                    </div>
+                    <div class="news-item">
+                        <h3>New Publication in Separation and Purification Technologies - Dr. Marcus Cook & Dr. Ludmila Peeva
+                        </h3>
+                        <p>Our latest research findings have been published in Separation and Purification Technologies by Dr. Marcus Cook & Dr. Ludmila Peeva</p>
+                        <a href="#" class="news-link" onclick="showPage('news')">More Details</a>
+                    </div>
+                    <div class="news-item">
+                        <h3>New Publication in Nature Communication - Dr. Maria Burggraef
+                        </h3>
+                        <p>Our latest research findings have been published in Nature Communication by Dr. Maria Burggraef</p>
+                        <a href="#" class="news-link" onclick="showPage('news')">More Details</a>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+
+        <!-- Research Page -->
+        <div id="research" class="page">
+            <div class="container">
+                <h1 class="section-title">Our Research</h1>
+                
+                <div class="research-area">
+                    <div class="research-content">
+                        <div>
+                            <h2>Organic Solvent Nanofiltration & Ultrafiltration (OSN & OSU)</h2>
+                            <p style="margin-bottom: 1rem; line-height: 1.8;">
+                                 Our research pioneers on solvent-stable membranes that enable high-flux, selective separations in aggressive organic media—opening routes to catalyst recycling, product isolation and solvent recovery in pharmaceutical and fine-chemical processes.
+                            </p>
+                            
+                        </div>
+                        <div class="research-image">
+                            <img src="OSN.png" alt="Descriptive alt text">
+                          </div>
+                    </div>
+                </div>
+
+                <div class="research-area">
+                    <div class="research-content">
+                        <div>
+                            <h2>Membrane Fabrication & Characterisation</h2>
+                            <p style="text-align: justify;  margin-bottom: 1rem; line-height: 1.8;">
+                                Our research focuses on the synthesis and characterisation of novel membrane materials combining different fabrication methods (e.g., interfacial polymerisation & thin-film compsites) with theoretical simulation to tailor membrane pore structures and surface chemistries for precise molecular sieving
+                            </p>                            
+                        </div>
+                        <div class="research-image">
+                            <img src="AFM.png" alt="Descriptive alt text">
+                          </div>
+                    </div>
+                </div>
+
+                <div class="research-area">
+                    <div class="research-content">
+                        <div class="research-image">
+                            <img src="Oligo.jpg" alt="Descriptive alt text">
+                          </div>
+                        <div>
+                            <h2>Precision Polymer Synthesis</h2>
+                            <p style="margin-bottom: 1rem; line-height: 1.8;">
+                                Leveraging "Nanostar Sieving", a membrane-based appraoch, our research focuses on producing narrowly defined polymers (PEG, oligonucleotides, peptides) with monodisperse molecular weights—critical for next-generation therapeutics.
+                            </p>
+                            
+                        </div>
+                        
+                    </div>
+                </div>
+
+                
+            </div>
+        </div>
+
+        <!-- People Page -->
+        <div id="people" class="page">
+            <div class="container">
+                <h1 class="section-title">Our Team</h1>
+
+                <div class="people-submenu">
+                    <button class="active" data-section="current">Team</button>
+                    <button data-section="alumni">Alumni</button>
+                  </div>
+
+                  <div id="current" class="people-section active">
+                <div class="people-grid">
+                    <div class="person-card">
+                        <div class="person-image">
+                            <img src="andrew.jpg" alt="Dr.  Livingston">
+                          </div>
+                        <h3>Professor Andrew G. Livingston</h3>
+                        <p style="color: #667eea; font-weight: 600; margin-bottom: 1rem;">Principal Investigator</p>
+                        <p style="margin-bottom: 1rem; line-height: 1.6;">
+                             
+                        </p>
+                        <p style="color: #5a6c7d; font-size: 0.9rem;">
+                            <strong>Research Areas:</strong> Molecular Separations, Membrane Science, Organic Solvent Nanofiltration, Pharmaceutical Manufacturing, Membrane Engineering, Oligonucleotide Therapeutics, Peptide Therapeutics, Antibody Drug Conjugates
+                        </p>
+                    </div>
+
+                    <div class="person-card">
+                        <div class="person-image">
+                            <img src="ludmila.jpg" alt="Dr.  Livingston">
+                          </div>
+                        <h3>Dr. Ludmila Peeva</h3>
+                        <p style="color: #667eea; font-weight: 600; margin-bottom: 1rem;">Research Fellow</p>
+                        <p style="margin-bottom: 1rem; line-height: 1.6;">
+                            
+                        </p>
+                        <p style="color: #5a6c7d; font-size: 0.9rem;">
+                            <strong>Research Areas:</strong> 
+                        </p>
+                    </div>
+
+                    
+
+                    <div class="person-card">
+                        <div class="person-image">
+                            <img src="mustafa.jpg" alt="Dr.  Livingston">
+                          </div>
+                          
+                        <h3>Dr. Mustafa Al-Kadhimi</h3>
+                        <p style="color: #667eea; font-weight: 600; margin-bottom: 1rem;">Postdoctoral Research Assistant</p>
+                        <p style="margin-bottom: 1rem; line-height: 1.6;">
+                            
+                        </p>
+                        <p style="color: #5a6c7d; font-size: 0.9rem;">
+                            <strong>Research Areas:</strong> Oligonucleotide synthesis, Peptide synthesis, Nucleic acid chemistry, Synthetic organic chemistry, Organic solvent nanofiltration (OSN), Separation and purification techniques.
+                        </p>
+                    </div>
+
+                    <div class="person-card">
+                        <div class="person-image">
+                            <img src="chunchun.JPG" alt="Dr.  Livingston">
+                          </div>
+                        <h3>Dr. Chunchun Ye</h3>
+                        <p style="color: #667eea; font-weight: 600; margin-bottom: 1rem;">Postdoctoral Research Assistant</p>
+                        <p style="margin-bottom: 1rem; line-height: 1.6;">
+                            
+                        </p>
+                        <p style="color: #5a6c7d; font-size: 0.9rem;">
+                            <strong>Research Areas:</strong> Polymers of Intrinsic Microporosity (PIMs), Microporous materials, Membranes, Molecular separations, Redox flow battery 
+                        </p>
+                    </div>
+
+                    <div class="person-card">
+                        <div class="person-image">
+                            <img src="Rita.jpg" alt="Dr.  Livingston">
+                          </div>
+                        <h3>Dr. Rita Nabais</h3>
+                        <p style="color: #667eea; font-weight: 600; margin-bottom: 1rem;">Postdoctoral Research Assistant</p>
+                        <p style="margin-bottom: 1rem; line-height: 1.6;">
+                            
+                        </p>
+                        <p style="color: #5a6c7d; font-size: 0.9rem;">
+                            <strong>Research Areas:</strong> 
+                        </p>
+                    </div>
+
+                    <div class="person-card">
+                        <div class="person-image">
+                            <img src="Marjo.jpg" alt="Dr.  Livingston">
+                          </div>
+                        <h3>Dr. Marjolaine Thomas</h3>
+                        <p style="color: #667eea; font-weight: 600; margin-bottom: 1rem;">Postdoctoral Research Assistant</p>
+                        <p style="margin-bottom: 1rem; line-height: 1.6;">
+                            
+                        </p>
+                        <p style="color: #5a6c7d; font-size: 0.9rem;">
+                            <strong>Research Areas:</strong> 
+                        </p>
+                    </div>
+
+                    <div class="person-card">
+                        <div class="person-image">
+                            <img src="tiefan.jpg" alt="Dr.  Livingston">
+                          </div>
+                        <h3>Dr. Tiefan Huang</h3>
+                        <p style="color: #667eea; font-weight: 600; margin-bottom: 1rem;">Postdoctoral Research Assistant</p>
+                        <p style="margin-bottom: 1rem; line-height: 1.6;">
+                            
+                        </p>
+                        <p style="color: #5a6c7d; font-size: 0.9rem;">
+                            <strong>Research Areas:</strong> 
+                        </p>
+                    </div>
+
+                    <div class="person-card">
+                        <div class="person-image">
+                            <img src="Adam.jpeg" alt="Dr.  Livingston">
+                          </div>
+                        <h3>Dr. Adam Oxley</h3>
+                        <p style="color: #667eea; font-weight: 600; margin-bottom: 1rem;">Postdoctoral Research Assistant</p>
+                        <p style="margin-bottom: 1rem; line-height: 1.6;">
+                            
+                        </p>
+                        <p style="color: #5a6c7d; font-size: 0.9rem;">
+                            <strong>Research Areas:</strong> 
+                        </p>
+                    </div>
+
+                    <div class="person-card">
+                        <div class="person-image">
+                            <img src="Adam.jpeg" alt="Dr.  Livingston">
+                          </div>
+                        <h3>Dr. Maria Burggraef</h3>
+                        <p style="color: #667eea; font-weight: 600; margin-bottom: 1rem;">Postdoctoral Research Assistant</p>
+                        <p style="margin-bottom: 1rem; line-height: 1.6;">
+                            
+                        </p>
+                        <p style="color: #5a6c7d; font-size: 0.9rem;">
+                            <strong>Research Areas:</strong> 
+                        </p>
+                    </div>
+
+                    <div class="person-card">
+                        <div class="person-image">
+                            <img src="Seok.jpg" alt="Dr.  Livingston">
+                          </div>
+                        <h3>Seok Ju Han</h3>
+                        <p style="color: #667eea; font-weight: 600; margin-bottom: 1rem;">PhD Student</p>
+                        <p style="margin-bottom: 1rem; line-height: 1.6;">
+                            
+                        </p>
+                        <p style="color: #5a6c7d; font-size: 0.9rem;">
+                            <strong>Research Areas:</strong> 
+                        </p>
+                    </div>
+
+                    <div class="person-card">
+                        <div class="person-image">
+                            <img src="James.jpg" alt="Dr.  Livingston">
+                          </div>
+                        <h3>James Botwright</h3>
+                        <p style="color: #667eea; font-weight: 600; margin-bottom: 1rem;">PhD Student</p>
+                        <p style="margin-bottom: 1rem; line-height: 1.6;">
+                            
+                        </p>
+                        <p style="color: #5a6c7d; font-size: 0.9rem;">
+                            <strong>Research Areas:</strong> Liquid Phase Peptide Synthesis, Organic Solvent Nanofiltration, Green Peptide Synthesis, Oligonucleotide Synthesis
+                        </p>
+                    </div>
+
+                    <div class="person-card">
+                        <div class="person-image">
+                            <img src="yiran.jpg" alt="Dr.  Livingston">
+                          </div>
+                        <h3>Yiran Li</h3>
+                        <p style="color: #667eea; font-weight: 600; margin-bottom: 1rem;">PhD Student</p>
+                        <p style="margin-bottom: 1rem; line-height: 1.6;">
+                            
+                        </p>
+                        <p style="color: #5a6c7d; font-size: 0.9rem;">
+                            <strong>Research Areas:</strong> 
+                        </p>
+                    </div>
+
+                    <div class="person-card">
+                        <div class="person-image">
+                            <img src="Jessica.jpg" alt="Dr.  Livingston">
+                          </div>
+                        <h3>Jessica Spencer-Dene</h3>
+                        <p style="color: #667eea; font-weight: 600; margin-bottom: 1rem;">PhD Student</p>
+                        <p style="margin-bottom: 1rem; line-height: 1.6;">
+                            
+                        </p>
+                        <p style="color: #5a6c7d; font-size: 0.9rem;">
+                            <strong>Research Areas:</strong> Membrane-assisted antisolvent crystallisation, Controlled crystallisation, Peptide Synthesis, Process Chemistry
+                        </p>
+                    </div>
+
+                    <div class="person-card">
+                        <div class="person-image">
+                            <img src="mustafa.jpg" alt="Dr.  Livingston">
+                          </div>
+                        <h3>Victoria Williams</h3>
+                        <p style="color: #667eea; font-weight: 600; margin-bottom: 1rem;">PhD Student</p>
+                        <p style="margin-bottom: 1rem; line-height: 1.6;">
+                            
+                        </p>
+                        <p style="color: #5a6c7d; font-size: 0.9rem;">
+                            <strong>Research Areas:</strong> 
+                        </p>
+                    </div>
+
+                    </div>
+                    </div>
+
+
+                    <!--Alumini Page-->
+                    <div id="alumni" class="people-section">
+                        <div class="container">
+                            <h1 class="section-title">Alumni Network</h1>
+                    
+                            <!-- Introduction -->
+                            <div style="text-align: center; margin-bottom: 3rem; max-width: 800px; margin-left: auto; margin-right: auto;">
+                                <p style="font-size: 1.1rem; line-height: 1.8; color: #5a6c7d;">
+                                    Our alumni network spans across the globe, with former group members making significant contributions to academia, industry, and research institutions worldwide.
+                                </p>
+                            </div>
+                    
+                            <!-- Statistics -->
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin: 3rem 0;">
+                                <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); text-align: center; border-top: 4px solid #28a745;">
+                                    <div style="font-size: 2.5rem; font-weight: 800; color: #28a745; margin-bottom: 0.5rem;">4</div>
+                                    <h4 style="color: #2c3e50; margin-bottom: 0.5rem;">Academic Positions</h4>
+                                    <p style="color: #5a6c7d; font-size: 0.9rem;">Faculty positions worldwide</p>
+                                </div>
+                                <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); text-align: center; border-top: 4px solid #667eea;">
+                                    <div style="font-size: 2.5rem; font-weight: 800; color: #667eea; margin-bottom: 0.5rem;">2</div>
+                                    <h4 style="color: #2c3e50; margin-bottom: 0.5rem;">Industry Positions</h4>
+                                    <p style="color: #5a6c7d; font-size: 0.9rem;"> Industry positions worldwise</p>
+                                </div>
+                                <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); text-align: center; border-top: 4px solid #ffc107;">
+                                    <div style="font-size: 2.5rem; font-weight: 800; color: #ffc107; margin-bottom: 0.5rem;">0</div>
+                                    <h4 style="color: #2c3e50; margin-bottom: 0.5rem;">Research Institutes</h4>
+                                    <p style="color: #5a6c7d; font-size: 0.9rem;">National labs & institutes</p>
+                                </div>
+                            </div>
+                    
+                            <!-- Interactive Map -->
+                            <div style="background: white; border-radius: 20px; padding: 2rem; margin: 3rem 0; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                                    <h3 style="color: #764ba2; margin: 0;">Global Alumni Map</h3>
+                                    <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <div style="width: 16px; height: 16px; background: #28a745; border-radius: 50%; border: 2px solid white;"></div>
+                                            <span style="font-size: 0.85rem; color: #5a6c7d;">Academia</span>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <div style="width: 16px; height: 16px; background: #667eea; border-radius: 50%; border: 2px solid white;"></div>
+                                            <span style="font-size: 0.85rem; color: #5a6c7d;">Industry</span>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <div style="width: 16px; height: 16px; background: #ffc107; border-radius: 50%; border: 2px solid white;"></div>
+                                            <span style="font-size: 0.85rem; color: #5a6c7d;">Research</span>
+                                        </div>
+                                    </div>
+                                </div>
+                    
+                                <div id="alumniMapStandalone" style="width: 100%; height: 500px; border-radius: 15px;"></div>
+                    
+                                <p style="text-align: center; color: #5a6c7d; font-size: 0.9rem; margin-top: 1.5rem;">
+                                    <strong>Interactive:</strong> Click cluster numbers to zoom in • Individual markers show alumni details
+                                </p>
+                            </div>
+                        </div>
+                </div>
+            </div>
+        </div>
+
+       <!-- Publications Page -->
+<div id="publications" class="page">
+    <div class="container">
+      <h1 class="section-title">Publications & Patents</h1>
+  
+      <!-- 2025 -->
+      <h2 class="publication-year">2025</h2>
+  
+      <div class="publication-item">
+        <div class="publication-content">
+          <div>
+            <h3>Open and FAIR data for nanofiltration in organic media: A unified approach</h3>
+            <p style="color: #667eea; font-size: 0.9rem; margin-bottom: 1rem;">Journal of Membrane Science, Elsevier vol. 713</p>
+            <p style="margin-bottom: 1rem; line-height: 1.7;">Van Buggenhout S, Ignacz G, Caspers S, Dhondt R, Lenaerts M, Lenaerts N, Hosseinabadi SR, Nulens I, Koeckelberghs G, Ren Y, Lively RP, Rabiller-Baudry M, Lim KM, Ghazali N, Coronas J, Abel M, Wessling M, Skiborowski M, Oxley A, Han SJ, Livingston A, Yi Z, Gao C, Guan K, Gonzales RR, Matsuyama H, Bettahalli SN, McCutcheon JR, Radmanesh F and Benes NE</p>
+            <a href="https://doi.org/10.1016/j.memsci.2024.123356" class="doi-link" target="_blank" rel="noopener">DOI: 10.1016/j.memsci.2024.123356</a>
+            <a href="#" class="qmro-link">QMRO Abstract</a>
+          </div>
+          <div class="publication-image">
+            <img src="open and fair.jpg" alt="2D Materials Study">
+          </div>
+        </div>
+      </div>
+  
+      <div class="publication-item">
+        <div class="publication-content">
+          <div>
+            <h3>Separation of an azeotropic mixture through the use of organic solvent nanofiltration</h3>
+            <p style="color: #667eea; font-size: 0.9rem; margin-bottom: 1rem;">Separation and Purification Technology, Elsevier vol. 353</p>
+            <p style="margin-bottom: 1rem; line-height: 1.7;">Cook M, Peeva LG and Livingston AG</p>
+            <a href="https://doi.org/10.1016/j.seppur.2024.128480" class="doi-link" target="_blank" rel="noopener">DOI: 10.1016/j.seppur.2024.128480</a>
+            <a href="#" class="qmro-link">QMRO Abstract</a>
+          </div>
+          <div class="publication-image">
+            <img src="Azeo.jpg" alt="2D Materials Study">
+          </div>
+        </div>
+      </div>
+  
+      <!-- 2024 -->
+      <h2 class="publication-year">2024</h2>
+  
+      <div class="publication-item">
+        <div class="publication-content">
+          <div>
+            <h3>Exactly defined molecular weight poly(ethylene glycol) allows for facile identification of PEGylation sites on proteins</h3>
+            <p style="color: #667eea; font-size: 0.9rem; margin-bottom: 1rem;">Nature Communications, Springer Nature vol. 15 (1)</p>
+            <p style="margin-bottom: 1rem; line-height: 1.7;">Burggraef MJ, Oxley A, Zaidi NA, Cutillas PR, Gaffney PRJ and Livingston AG</p>
+            <a href="https://doi.org/10.1038/s41467-024-54076-6" class="doi-link" target="_blank" rel="noopener">DOI: 10.1038/s41467-024-54076-6</a>
+            <a href="#" class="qmro-link">QMRO Abstract</a>
+          </div>
+          <div class="publication-image">
+            <img src="exact.webp" alt="2D Materials Study">
+          </div>
+        </div>
+      </div>
+  
+      <div class="publication-item">
+        <div class="publication-content">
+          <div>
+            <h3>Thin-film composite membranes with contorted monomer for high-flux isothermal refining</h3>
+            <p style="color: #667eea; font-size: 0.9rem; margin-bottom: 1rem;">Journal of Membrane Science, Elsevier vol. 700</p>
+            <p style="margin-bottom: 1rem; line-height: 1.7;">Alduraiei F, Abdulhamid MA, Gebreyohannes AY, Peeva L, Livingston A, Nunes SP and Szekely G</p>
+            <a href="https://doi.org/10.1016/j.memsci.2024.122712" class="doi-link" target="_blank" rel="noopener">DOI: 10.1016/j.memsci.2024.122712</a>
+            <a href="#" class="qmro-link">Abstract</a>
+          </div>
+          <div class="publication-image">
+            <img src="1-s2.0-S0376738824003065-ga1_lrg.jpg" alt="2D Materials Study">
+          </div>
+        </div>
+      </div>
+  
+      <div class="publication-item">
+        <div class="publication-content">
+          <div>
+            <h3>Effect of polymer molecular weight on the long-term process stability of crosslinked polybenzimidazole organic solvent nanofiltration (OSN) membranes</h3>
+            <p style="color: #667eea; font-size: 0.9rem; margin-bottom: 1rem;">Journal of Membrane Science, Elsevier vol. 689</p>
+            <p style="margin-bottom: 1rem; line-height: 1.7;">Oxley A and Livingston AG</p>
+            <a href="https://doi.org/10.1016/j.memsci.2023.122149" class="doi-link" target="_blank" rel="noopener">DOI: 10.1016/j.memsci.2023.122149</a>
+            <a href="#" class="qmro-link">Abstract</a>
+          </div>
+          <div class="publication-image">
+            <img src="effect of polymer MW.jpg" alt="2D Materials Study">
+          </div>
+        </div>
+      </div>
+  
+      <!-- 2023 -->
+      <h2 class="publication-year">2023</h2>
+  
+      <div class="publication-item">
+        <div class="publication-content">
+          <div>
+            <h3>2D Covalent Organic Framework Membranes for Liquid‐Phase Molecular Separations: State of the Field, Common Pitfalls, and Future Opportunities</h3>
+            <p style="color: #667eea; font-size: 0.9rem; margin-bottom: 1rem;">Advanced Materials, Wiley vol. 36 (1)</p>
+            <p style="margin-bottom: 1rem; line-height: 1.7;">Burke DW, Jiang Z, Livingston AG and Dichtel WR</p>
+            <a href="https://doi.org/10.1002/adma.202300525" class="doi-link" target="_blank" rel="noopener">DOI: 10.1002/adma.202300525</a>
+            <a href="#" class="qmro-link">Abstract</a>
+          </div>
+          <div class="publication-image">
+            <img src="2D COF.jpg" alt="2D Materials Study">
+          </div>
+        </div>
+      </div>
+  
+      <!-- 2022 -->
+      <h2 class="publication-year">2022</h2>
+      <div class="publication-item">
+        <div class="publication-content">
+          <div>
+            <h3>Anti-fouling membranes for organic solvent nanofiltration (OSN) and organic solvent ultrafiltration (OSU): graft modified polybenzimidazole (PBI)</h3>
+            <p style="color: #667eea; font-size: 0.9rem; margin-bottom: 1rem;">Journal of Membrane Science, Elsevier vol. 662</p>
+            <p style="margin-bottom: 1rem; line-height: 1.7;">Oxley A and Livingston AG</p>
+            <a href="https://doi.org/10.1016/j.memsci.2022.120977" class="doi-link" target="_blank" rel="noopener">DOI: 10.1016/j.memsci.2022.120977</a>
+          </div>
+          <div class="publication-image">
+            <img src="anti-fouling.jpg" alt="2D Materials Study">
+          </div>
+        </div>
+      </div>
+  
+      <div class="publication-item">
+        <div class="publication-content">
+          <div>
+            <h3>Hydrophobic polyamide nanofilms provide rapid transport for crude oil separation</h3>
+            <p style="color: #667eea; font-size: 0.9rem; margin-bottom: 1rem;">Science, AAAS vol. 377 (6614), 1555-1561</p>
+            <p style="margin-bottom: 1rem; line-height: 1.7;">Li S, Dong R, Musteata VE, Kim J, Rangnekar ND, Johnson JR, Marshall BD, Chisca S, Xu J, Hoy S, McCool BA, Nunes SP, Jiang Z and Livingston AG</p>
+            <a href="https://doi.org/10.1126/science.abq0598" class="doi-link" target="_blank" rel="noopener">DOI: 10.1126/science.abq0598</a>
+            <a href="#" class="qmro-link">QMRO Abstract</a>
+          </div>
+          <div class="publication-image">
+            <img src="hydrophobic.jpg" alt="2D Materials Study">
+          </div>
+        </div>
+      </div>
+  
+      <div class="publication-item">
+        <div class="publication-content">
+          <div>
+            <h3>Aligned macrocycle pores in ultrathin films for accurate molecular sieving</h3>
+            <p style="color: #667eea; font-size: 0.9rem; margin-bottom: 1rem;">Nature, Springer Nature vol. 609 (7925), 58-64</p>
+            <p style="margin-bottom: 1rem; line-height: 1.7;">Jiang Z, Dong R, Evans AM, Biere N, Ebrahim MA, Li S, Anselmetti D, Dichtel WR and Livingston AG</p>
+            <a href="https://doi.org/10.1038/s41586-022-05032-1" class="doi-link" target="_blank" rel="noopener">DOI: 10.1038/s41586-022-05032-1</a>
+            <a href="#" class="qmro-link">QMRO Abstract</a>
+        </div>
+        <div class="publication-image">
+            <img src="aligned.webp" alt="2D Materials Study">
+          </div>
+      </div>
+    </div>
+    </div>
+    </div>
+
+
+
+
+
+ <!-- News Page -->
+ <div id="news" class="page">
+    <div class="container">
+        <h1 class="section-title">Group News</h1>
+        
+        <div class="news-list">
+            <div class="news-list-item">
+                <div class="news-date">20 June 2025</div>
+                <h3>Professor Andrew Livingston Celebrated for Double Honours in Chemical Engineering</h3>
+                <p>A remarkable week for Professor Andrew Livingston saw him recognised with two significant accolades: a prestigious Lifetime Achievement Award from the World Chemical Engineering Council (WCEC) and a substantial £1.7M grant from UKRI's Engineering and Physical Sciences Research Council (EPSRC).</p>
+                
+                <button class="news-expand-btn" onclick="toggleNewsDetails('news-1')">See More</button>
+                
+                <div id="news-1" class="news-details" style="display: none;">
+                    <div class="news-images">
+                        <!-- Replace these `src` values with your actual image filenames -->
+                        <div class="news-image">
+                            <img src="Andrew WCE.jpg" alt="Award Ceremony">
+                        </div>
+                        <div class="news-image">
+                            <img src="EPSRC Grant.jpg" alt="EPSRC Grant Announcement">
+                        </div>
+                     </div>
+                    
+                    
+                    <div class="news-full-content">
+                        <h4>WCEC Lifetime Achievement Award</h4>
+                        <p>Professor Livingston, Vice-Principal for Research and Innovation at Queen Mary University of London, was lauded for his pioneering work in polymer membranes for molecular separations by organic solvent nanofiltration (OSN). He was named one of three global recipients of the WCEC Lifetime Achievement Award, celebrating his exceptional contributions to chemical engineering, particularly in enabling the separation of molecular mixtures in organic liquids.</p>
+                        
+                        <blockquote style="background: rgba(103, 126, 234, 0.1); padding: 1.5rem; border-left: 4px solid #667eea; margin: 1.5rem 0; border-radius: 8px; font-style: italic;">
+                            "In addition to advancing fundamental knowledge, Andrew has played a key role in the commercialisation of membrane technologies for industrial applications, both as a scientist and an entrepreneur. Few membranologists have made such substantial contributions to both scientific understanding and technological development."
+                            <cite style="display: block; margin-top: 0.5rem; font-size: 0.9rem; color: #667eea;">— Jerry Lin, Regent's Professor of Chemical Engineering at Arizona State University</cite>
+                        </blockquote>
+
+                        <h4>EPSRC Grant: Sustainable Separation Membranes</h4>
+                        <p>Professor Livingston has secured a major £1.7 million grant from UKRI's EPSRC as part of a larger £7.5 million initiative for UK manufacturing. The project, "Sustainable Separation Membranes for Green Pharmaceutical Manufacturing," will be led by Queen Mary University of London in partnership with Imperial College London and industrial collaborators including Merck, Exactmer, and AstraZeneca.</p>
+
+                        <h4>Environmental Impact</h4>
+                        <p>The project aims to tackle the substantial environmental impact of current pharmaceutical manufacturing. Traditional methods for separating chemical compounds, such as boiling and distillation, are incredibly energy-intensive, contributing significantly to global carbon emissions and accounting for 10-15% of all industrial energy consumption.</p>
+
+                        <h4>Innovation Approach</h4>
+                        <p>The research team will focus on developing innovative membrane technologies that can efficiently separate different molecules in a liquid without the need for energy-demanding heating or boiling. This "liquid-phase separation" approach promises to drastically reduce the energy footprint of drug production.</p>
+
+                        <p>The comprehensive approach to sustainability includes:</p>
+                        <ul style="margin: 1rem 0; padding-left: 2rem; line-height: 1.7;">
+                            <li>Creating computer models to assess environmental impact of membrane production and use</li>
+                            <li>Developing greener manufacturing methods for membranes (eliminating toxic solvents)</li>
+                            <li>Finding methods to prolong membrane lifespan</li>
+                            <li>Enabling adoption of environmentally friendly "green solvents" in the industry</li>
+                            <li>Processing new drug modalities such as peptides, oligonucleotides, and ADC linkers</li>
+                            <li>Developing new membranes from bio-derived or recycled polymers</li>
+                        </ul>
+
+                        <blockquote style="background: rgba(103, 126, 234, 0.1); padding: 1.5rem; border-left: 4px solid #667eea; margin: 1.5rem 0; border-radius: 8px; font-style: italic;">
+                            "Although I am incredibly proud to receive this lifetime achievement award, I really feel like my research and innovation is just getting started and the best is yet to come - and so I am delighted to be awarded this EPSRC grant which will enable us to pursue new questions of urgent importance. I am looking forward to working with our collaborators and so – lets go for it!"
+                            <cite style="display: block; margin-top: 0.5rem; font-size: 0.9rem; color: #667eea;">— Professor Andrew Livingston</cite>
+                        </blockquote>
+
+                        <h4>Industry Impact</h4>
+                        <p>The academic/industry partnerships embedded in the project will ensure that the innovations directly contribute to enabling the manufacture of medicines with a significantly reduced environmental footprint, ultimately supporting sustainable growth across the UK.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="news-list-item">
+                <div class="news-date">23 April 2025</div>
+                <h3>Dr. Zhiwei Jiang & Dr. Chunchun Ye</h3>
+                <p>
+                    Two postdoctoral fellows, Dr. Zhiwei Jiang and Dr. Chunchun Ye, have received
+                    Nanyang Associate Professorship (NAP) positions at Nanyang Technological
+                    University. Congratulations to them both!
+                </p>
+            
+                <button class="news-expand-btn" onclick="toggleNewsDetails('news-2')">See More</button>
+            
+                <div id="news-2" class="news-details" style="display: none;">
+                    <!-- Your two images side by side -->
+                    <div class="news-images">
+                        <div class="news-image">
+                            <img src="Zhiwei.png" alt="Dr. Zhiwei Jiang">
+                        </div>
+                        <div class="news-image">
+                            <img src="chunchun.JPG" alt="Dr. Chunchun Ye">
+                        </div>
+                    </div>
+            
+                    <div class="news-full-content">
+                        <h4>Recognition by Nanyang Technological University</h4>
+                        <p>
+                            The appointment of Dr. Zhiwei Jiang and Dr. Chunchun Ye as Nanyang Associate Professors (NAP)
+                            acknowledges their outstanding contributions to membrane science and engineering. The NAP programme
+                            is designed to identify and nurture early-career scholars with the potential to become world leaders
+                            in their fields, offering a unique platform for these researchers to establish independent
+                            laboratories, mentor students, and drive innovative research.
+                        </p>
+            
+                        <h4>Research Achievements</h4>
+                        <p>
+                            Dr. Jiang has been instrumental in advancing the design and fabrication of high‑performance organic
+                            solvent nanofiltration (OSN) membranes. His work on cross‑linked polybenzimidazole membranes has
+                            improved the long‑term stability and flux of OSN membranes, enabling greener chemical separations and
+                            new industrial applications.
+                        </p>
+                        <p>
+                            Dr. Ye specialises in the synthesis of precision polymer membranes and the development of novel
+                            fabrication techniques, including interfacial polymerisation. Her research has expanded the
+                            capabilities of membrane technologies to handle harsh solvents and complex feed streams, opening new
+                            avenues for pharmaceutical and fine‑chemical manufacturing.
+                        </p>
+            
+                        <h4>Looking Forward</h4>
+                        <p>
+                            As NAP faculty at NTU, both Dr. Jiang and Dr. Ye will establish their own research programmes while
+                            maintaining strong ties with the Livingston Group. Their new positions will foster international
+                            collaboration, facilitate joint projects on sustainable membrane technologies, and provide unique
+                            opportunities for students and postdocs to experience research environments at both Queen Mary
+                            University of London and NTU.
+                        </p>
+            
+                        <p>
+                            We congratulate Dr. Jiang and Dr. Ye on this well‑deserved recognition and look forward to the
+                            continued impact of their work on the field of molecular separations.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <div class="news-list-item">
+                <div class="news-date">19 January 2025</div>
+                <h3>New Publication in Separation and Purification Technology – Dr. Marcus Cook & Dr. Ludmila Peeva</h3>
+                <p>
+                    A significant advancement in membrane science has been published by Dr. Marcus Cook and Dr. Ludmila Peeva in <em>Separation and Purification Technology</em>, titled <strong>“Separation of an azeotropic mixture through the use of organic solvent nanofiltration.”</strong>
+                </p>
+            
+                <button class="news-expand-btn" onclick="toggleNewsDetails('news-4')">See More</button>
+            
+                <div id="news-4" class="news-details" style="display: none;">
+                    <div class="news-images">
+                        <div class="news-image">
+                            <img src="CookPeeva.jpg" alt="Dr. Marcus Cook and Dr. Ludmila Peeva">
+                        </div>
+                        <div class="news-image">
+                            <img src="AzeotropeMembrane.png" alt="Graphical abstract from the OSN publication">
+                        </div>
+                    </div>
+            
+                    <div class="news-full-content">
+                        <h4>Research Summary</h4>
+                        <p>
+                            This study explores a novel approach to separating azeotropic solvent mixtures using organic solvent nanofiltration (OSN). By integrating experimental data and theoretical modeling, the team demonstrated the separation of toluene/alcohol mixtures using epoxysilicone membranes.
+                        </p>
+            
+                        <h4>Model-Driven Innovation</h4>
+                        <p>
+                            A non-ideal solution-diffusion model, enhanced by Flory–Huggins thermodynamics, accurately predicted membrane performance. The findings highlight how sorption effects dominate the separation mechanism, offering new predictive capabilities without exhaustive experiments.
+                        </p>
+            
+                        <h4>Impact on Industrial Separations</h4>
+                        <p>
+                            This work shows that OSN membranes can act as a “bridge” across azeotropes—potentially replacing high-energy pressure swing distillations. The findings open doors to integrating membranes within distillation columns, saving energy and simplifying process design.
+                        </p>
+            
+                        <p>
+                            Congratulations to Dr. Cook and Dr. Peeva for this outstanding contribution to sustainable chemical engineering and membrane science!
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="news-list-item">
+                <div class="news-date">22 November 2024</div>
+                <h3>Cross-Faculty Collaboration Yields Breakthrough in PEGylated Drug Consistency</h3>
+                <p>
+                    Researchers from Queen Mary University of London’s Faculty of Medicine and Dentistry and Faculty of Science and Engineering have developed a new method to improve PEGylated drugs, published in <em>Nature Communications</em>.
+                </p>
+            
+                <button class="news-expand-btn" onclick="toggleNewsDetails('news-5')">See More</button>
+            
+                <div id="news-5" class="news-details" style="display: none;">
+                    <div class="news-images">
+                        <div class="news-image">
+                            <img src="Nov 2024 News.jpg" alt="Cross-Faculty Collaboration Team">
+                        </div>
+                        <div class="news-image">
+                            <img src="PEGylationIllustration.png" alt="Illustration of PEGylation concept">
+                        </div>
+                    </div>
+            
+                    <div class="news-full-content">
+                        <h4>Breakthrough in PEGylation Consistency</h4>
+                        <p>
+                            The study, led by Professor Andrew Livingston, addresses challenges in PEGylation—a process where poly(ethylene glycol) (PEG) is attached to drugs to prolong circulation in the bloodstream. Conventional PEGylation methods result in inconsistent mixtures of different PEG chain lengths, making drug characterisation difficult.
+                        </p>
+            
+                        <h4>Single Molecular Weight PEG</h4>
+                        <p>
+                            The team developed a method to produce PEG molecules of a precise, defined molecular weight in scalable quantities. This allows for better control over PEGylation, reducing batch variation and improving drug reliability.
+                        </p>
+            
+                        <h4>Interdisciplinary Collaboration</h4>
+                        <p>
+                            The research was a collaboration between Queen Mary’s School of Engineering and Materials Science and the Barts Cancer Institute, merging expertise in materials chemistry and biomedicine. Dr. Maria Burggraef noted the value of combining disciplines to achieve impactful outcomes.
+                        </p>
+            
+                        <blockquote style="background: rgba(103, 126, 234, 0.1); padding: 1.5rem; border-left: 4px solid #667eea; margin: 1.5rem 0; border-radius: 8px; font-style: italic;">
+                            “With our research, we aimed to find a way to create a PEG molecule of a single, specific molecular weight... to make the PEGylation process more consistent, reduce batch variation and improve drug efficiency.”
+                            <cite style="display: block; margin-top: 0.5rem; font-size: 0.9rem; color: #667eea;">— Professor Andrew Livingston</cite>
+                        </blockquote>
+            
+                        <h4>Industry Collaboration</h4>
+                        <p>
+                            This research was carried out in collaboration with <strong>Exactmer Ltd.</strong>, demonstrating the power of academic–industry partnerships to translate advanced materials research into pharmaceutical innovation.
+                        </p>
+            
+                        <p>
+                            The breakthrough marks a promising step toward improving therapeutic effectiveness and highlights the power of interdisciplinary collaboration in solving complex biomedical challenges.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+
+            <div class="news-list-item">
+                <div class="news-date">13 November 2024</div>
+                <h3>New Publication in Nature Communications – Dr. Maria Burggraef</h3>
+                <p>
+                    Our latest research findings have been published in <em>Nature Communications</em> by
+                    Dr. Maria Burggraef, titled <strong>“Exactly defined molecular weight poly(ethylene glycol)
+                    allows for facile identification of PEGylation sites on proteins.”</strong>
+                </p>
+            
+                <button class="news-expand-btn" onclick="toggleNewsDetails('news-3')">See More</button>
+            
+                <div id="news-3" class="news-details" style="display: none;">
+                    <!-- Two images for the preview gallery -->
+                    <div class="news-images">
+                        <div class="news-image">
+                            <img src="Maria.jpg" alt="Dr. Maria Burggraef">
+                        </div>
+                        <div class="news-image">
+                            <img src="Maria Paper.webp" alt="Graphical abstract of the Nature Communications paper">
+                        </div>
+                    </div>
+            
+                    <div class="news-full-content">
+                        <h4>Publication Overview</h4>
+                        <p>
+                            The study, published on 13 November 2024:contentReference[oaicite:0]{index=0}, tackles a long‑standing problem in
+                            protein PEGylation: commercially available PEG reagents exhibit dispersity, which leads to batch‑to‑batch
+                            variations and analytical difficulties during characterisation:contentReference[oaicite:1]{index=1}.  Dr. Maria Burggraef
+                            and collaborators developed a defined, dispersity‑free poly(ethylene glycol) (PEG) reagent to overcome
+                            these limitations:contentReference[oaicite:2]{index=2}.
+                        </p>
+            
+                        <h4>Innovation: Defined Molecular Weight PEG</h4>
+                        <p>
+                            The team synthesised a precisely defined 5 kDa methoxy‑PEG (mPEG) active ester using an iterative
+                            liquid‑phase method based on Nanostar Sieving:contentReference[oaicite:3]{index=3}.  They then compared random
+                            PEGylation of bovine serum albumin with the defined PEG reagent versus a conventional disperse PEG.
+                            Unlike the disperse PEG, the defined reagent allowed straightforward monitoring of chemical
+                            modifications and clear identification of PEGylated fragments using peptide mapping and UPLC‑MS
+                            analysis:contentReference[oaicite:4]{index=4}.
+                        </p>
+            
+                        <h4>Implications for Therapeutics</h4>
+                        <p>
+                            By eliminating dispersity, the defined PEG reagent ensures consistent mass and chromatographic behaviour,
+                            making it easier to pinpoint PEGylation sites and characterise PEGylated proteins:contentReference[oaicite:5]{index=5}.
+                            This approach could enhance quality control for PEGylated therapeutics, reduce analytical complexity,
+                            and improve reproducibility in drug development.  The work showcases the Livingston Group’s
+                            commitment to combining precision polymer synthesis and advanced membrane technologies to solve
+                            industry‑relevant challenges.
+                        </p>
+            
+                        <p>
+                            Congratulations to Dr. Burggraef and the team for this impactful publication, and we look forward to
+                            seeing how defined PEGylation agents influence future therapeutic development!
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+
+            <div class="news-list-item">
+                <div class="news-date">10 May 2022</div>
+                <h3>Professor Andrew Livingston Elected Fellow of the Royal Society</h3>
+                <p>
+                    Professor Andrew Livingston, Vice-Principal (Research and Innovation) at Queen Mary University of London, has been elected a Fellow of the Royal Society—one of the highest honours in science.
+                </p>
+            
+                <button class="news-expand-btn" onclick="toggleNewsDetails('news-6')">See More</button>
+            
+                <div id="news-6" class="news-details" style="display: none;">
+                    <div class="news-images">
+                        <div class="news-image">
+                            <img src="andrew.jpg" alt="Professor Andrew Livingston Royal Society">
+                        </div>
+                        <div class="news-image">
+                            <img src="royal society logo.webp" alt="Royal Society Logo">
+                        </div>
+                    </div>
+            
+                    <div class="news-full-content">
+                        <h4>Recognition of Scientific Excellence</h4>
+                        <p>
+                            The Royal Society—the world's oldest scientific academy—has honoured Professor Livingston for his distinguished contributions to chemical engineering. His work on molecular separation membranes, purification processes, and high-value pharmaceutical synthesis has shaped both academic research and industrial practice.
+                        </p>
+            
+                        <h4>Career Achievements</h4>
+                        <p>
+                            Since joining Queen Mary's School of Engineering and Materials Science in 2019, Professor Livingston has continued to build on a legacy of innovation. His research has been instrumental in developing membrane technologies that transitioned from the lab to industry via successful start-ups. He holds numerous publications and patents and is internationally recognised for his pioneering work.
+                        </p>
+            
+                        <blockquote style="background: rgba(103, 126, 234, 0.1); padding: 1.5rem; border-left: 4px solid #667eea; margin: 1.5rem 0; border-radius: 8px; font-style: italic;">
+                            “I am enormously proud to be elected a Fellow of this historic and esteemed institution. It is a great honour for both myself and Queen Mary... I have been lucky to work with so many talented colleagues whose help has been instrumental in advancing chemical engineering and in receiving this recognition.”
+                            <cite style="display: block; margin-top: 0.5rem; font-size: 0.9rem; color: #667eea;">— Professor Andrew Livingston</cite>
+                        </blockquote>
+            
+                        <h4>Historical Legacy</h4>
+                        <p>
+                            The Fellowship of the Royal Society includes scientific giants such as Isaac Newton, Charles Darwin, and Stephen Hawking. Professor Livingston joins their ranks in recognition of his lasting impact on British engineering and global science.
+                        </p>
+            
+                        <h4>A Note from the Royal Society</h4>
+                        <p>
+                            Sir Adrian Smith, President of the Royal Society, commented, “Through their careers so far, these researchers have helped further our understanding of human disease, biodiversity loss and the origins of the universe... I look forward to seeing what great things they will achieve in the years ahead.”
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+
+            
+        </div>
+    </div>
+</div>
+
+
+
+        <!-- Opportunities Page -->
+        <div id="opportunities" class="page">
+            <div class="container">
+                <h1 class="section-title">Opportunities</h1>
+                
+                <div class="research-area">
+                    <div style="padding: 3rem;">
+                        <h2>PhD Positions Available</h2>
+                        <p style="margin-bottom: 2rem; line-height: 1.8; font-size: 1.1rem;">
+                            We are currently seeking exceptional PhD candidates to join our dynamic research team. We offer fully funded positions with competitive stipends and excellent research facilities.
+                        </p>
+                        
+                        <h3 style="color: #667eea; margin-bottom: 1rem;">Current Openings:</h3>
+                        <ul style="margin-bottom: 2rem; line-height: 1.8;">
+                            <li></li>
+                            <li></li>
+                            <li></li>
+                        </ul>
+
+                        <h3 style="color: #667eea; margin-bottom: 1rem;">Requirements:</h3>
+                        <ul style="margin-bottom: 2rem; line-height: 1.8;">
+                            <li></li>
+                            <li></li>
+                            <li></li>
+                            <li></li>
+                        </ul>
+
+                        <div style="background: linear-gradient(135deg, rgba(103, 126, 234, 0.1), rgba(118, 75, 162, 0.1)); padding: 2rem; border-radius: 15px; margin: 2rem 0;">
+                            <h3 style="color: #667eea; margin-bottom: 1rem;">What We Offer:</h3>
+                            <ul style="line-height: 1.8;">
+                                <li></li>
+                                <li></li>
+                                <li></li>
+                                <li></li>
+                                <li></li>
+                                <li></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="research-area">
+                    <div style="padding: 3rem;">
+                        <h2>Postdoctoral Positions</h2>
+                        <p style="margin-bottom: 2rem; line-height: 1.8; font-size: 1.1rem;">
+                            We welcome applications from outstanding postdoctoral researchers looking to advance their careers in cutting-edge materials research.
+                        </p>
+                        
+                        <h3 style="color: #667eea; margin-bottom: 1rem;">Available Positions:</h3>
+                        <ul style="margin-bottom: 2rem; line-height: 1.8;">
+                            <li></li>
+                            <li></li>
+                        </ul>
+
+                        <p style="line-height: 1.8;">
+                            Postdoctoral researchers in our group have access to independent research funding, publication opportunities, and strong support for fellowship applications and career development.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="research-area">
+                    <div style="padding: 3rem;">
+                        <h2>Visiting Researcher Program</h2>
+                        <p style="margin-bottom: 2rem; line-height: 1.8; font-size: 1.1rem;">
+                            We welcome visiting researchers for short-term and long-term collaborations. Our program provides access to our facilities and expertise for international researchers.
+                        </p>
+                        
+                        <h3 style="color: #667eea; margin-bottom: 1rem;">Program Benefits:</h3>
+                        <ul style="line-height: 1.8;">
+                            <li></li>
+                            <li></li>
+                            <li></li>
+                            <li></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin: 3rem 0;">
+                    <h2 style="color: #667eea; margin-bottom: 1rem;">How to Apply</h2>
+                    <p style="font-size: 1.1rem; line-height: 1.8; margin-bottom: 2rem;">
+                        Interested candidates should send a CV, cover letter, and contact information for two references to our recruitment team.
+                    </p>
+                    <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 2rem; border-radius: 20px; display: inline-block;">
+                        <strong>Application Deadline: </strong><br>
+                        For informal inquiries, please contact Professor Andrew Livingston
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Page -->
+        <div id="contact" class="page">
+            <div class="container">
+                <h1 class="section-title">Contact Us</h1>
+                
+                <div style="text-align: center; margin-bottom: 3rem;">
+                    <p style="font-size: 1.2rem; line-height: 1.8; color: #5a6c7d;">
+                        We welcome inquiries about our research, collaboration opportunities, and available positions.
+                    </p>
+                </div>
+
+                <div class="contact-grid">
+                    <div class="contact-card">
+                        <div class="contact-icon">📧</div>
+                        <h3>Email</h3>
+                        <p style="margin-bottom: 1rem;">a.livingston@qmul.ac.uk</p>
+                        <p style="color: #5a6c7d;">For general inquiries and collaboration opportunities</p>
+                    </div>
+
+                    <div class="contact-card">
+                        <div class="contact-icon">📞</div>
+                        <h3>Phone</h3>
+                        <p style="margin-bottom: 1rem;">+44 (0)20 7882 5555</p>
+                        <p style="color: #5a6c7d;">Office hours: Monday to Friday, 9:00 AM - 5:00 PM</p>
+                    </div>
+
+                    <div class="contact-card">
+                        <div class="contact-icon">📍</div>
+                        <h3>Address</h3>
+                        <p style="margin-bottom: 1rem;">
+                            School of Engineering and Material Sciences<br>
+                            Queen Mary University of London<br>
+                            Mile End Road<br>
+                            London E1 4NS, UK
+                        </p>
+                    </div>
+
+                    <div class="contact-card">
+                        <div class="contact-icon">🎓</div>
+                        <h3>Admissions</h3>
+                        <p style="margin-bottom: 1rem;">admissions@qmul.ac.uk</p>
+                        <p style="color: #5a6c7d;">For PhD and postdoctoral position applications</p>
+                    </div>
+                </div>
+
+                <div style="background: white; border-radius: 20px; padding: 3rem; margin: 3rem 0; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);">
+                    <h2 style="text-align: center; color: #667eea; margin-bottom: 2rem;">Visit Our Laboratory</h2>
+                    <p style="text-align: center; font-size: 1.1rem; line-height: 1.8; margin-bottom: 2rem;">
+                        We welcome visits from potential collaborators, students, and industry partners. Our state-of-the-art facilities are located in the heart of London, easily accessible by public transport.
+                    </p>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-top: 2rem;">
+                        <div style="text-align: center;">
+                            <h4 style="color: #667eea; margin-bottom: 1rem;">🚇 Nearest Station</h4>
+                            <p>Mile End Underground Station<br>(Central, District & Hammersmith lines)</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <h4 style="color: #667eea; margin-bottom: 1rem;">🚌 Bus Routes</h4>
+                            <p>25, 205, 277, 323, 425, D6, D7</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <h4 style="color: #667eea; margin-bottom: 1rem;">🚗 Parking</h4>
+                            <p>Visitor parking available<br>Please contact us in advance</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!--Quiz Page-->
+        <div id="game" class="page">
+            <div class="container">
+              <h1 class="section-title">Daily Quiz</h1>
+          
+              <div id="quiz-intro">
+                <p style="font-size: 1.1rem;">Enter your name to begin the daily quiz.</p>
+                <input type="text" id="playerName" placeholder="Your name..." style="padding: 0.5rem; font-size: 1rem;">
+                <button onclick="startQuiz()" class="news-expand-btn" style="margin-left: 1rem;">Start Quiz</button>
+              </div>
+          
+              <div id="quiz-area" style="margin-top: 2rem;"></div>
+          
+              <div id="leaderboard" style="margin-top: 3rem;"></div>
+            </div>
+          </div>
+          
+          
+
+
+
+
+    </main>
+
+    <script>
+        // Navigation functionality
+        const navLinks = document.querySelectorAll('.nav-link');
+        const pages = document.querySelectorAll('.page');
+
+        function showPage(pageId) {
+            // Hide all pages
+            pages.forEach(page => {
+                page.classList.remove('active');
+            });
+
+            // Remove active class from all nav links
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+            });
+
+            // Show selected page
+            document.getElementById(pageId).classList.add('active');
+            
+            // Add active class to corresponding nav link
+            const activeLink = document.querySelector(`[data-page="${pageId}"]`);
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+
+            // Smooth scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Add this ↓
+            if (pageId === 'alumni') {
+            setTimeout(() => {
+            initializeAlumniMap();
+            window.alumniMapInstance.invalidateSize();  // <== critical!
+            }, 300);
+}
+
+        }
+
+        // Add event listeners to navigation links
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const pageId = link.getAttribute('data-page');
+                showPage(pageId);
+            });
+        });
+
+        // Add scroll effect to header
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 50) {
+                header.style.background = 'rgba(255, 255, 255, 0.98)';
+                header.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.15)';
+            } else {
+                header.style.background = 'rgba(255, 255, 255, 0.95)';
+                header.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.1)';
+            }
+        });
+
+        // Add intersection observer for fade-in animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in');
+                }
+            });
+        }, observerOptions);
+
+        // Observe elements for animation
+        document.querySelectorAll('.research-area, .person-card, .publication-item, .event-card').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Add dynamic background pattern
+        function createFloatingShapes() {
+            const shapes = document.createElement('div');
+            shapes.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: -1;
+                overflow: hidden;
+            `;
+
+            for (let i = 0; i < 5; i++) {
+                const shape = document.createElement('div');
+                shape.style.cssText = `
+                    position: absolute;
+                    width: ${Math.random() * 100 + 50}px;
+                    height: ${Math.random() * 100 + 50}px;
+                    background: linear-gradient(45deg, rgba(103, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+                    border-radius: 50%;
+                    top: ${Math.random() * 100}%;
+                    left: ${Math.random() * 100}%;
+                    animation: float ${Math.random() * 10 + 10}s ease-in-out infinite;
+                `;
+                shapes.appendChild(shape);
+            }
+
+            document.body.appendChild(shapes);
+        }
+
+        // Add CSS for floating animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes float {
+                0%, 100% {
+                    transform: translateY(0px) translateX(0px) rotate(0deg);
+                }
+                25% {
+                    transform: translateY(-20px) translateX(10px) rotate(90deg);
+                }
+                50% {
+                    transform: translateY(-10px) translateX(-10px) rotate(180deg);
+                }
+                75% {
+                    transform: translateY(-30px) translateX(5px) rotate(270deg);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize floating shapes
+        createFloatingShapes();
+
+        // Add loading animation
+        window.addEventListener('load', () => {
+            document.body.style.animation = 'fadeIn 1s ease-out';
+        }); 
+
+        // Team ⇄ Alumni toggle
+const subBtns = document.querySelectorAll('.people-submenu button');
+const sections = document.querySelectorAll('.people-section');
+
+
+// News expansion functionality
+function toggleNewsDetails(newsId) {
+            const newsDetails = document.getElementById(newsId);
+            const btn = newsDetails.previousElementSibling;
+            
+            if (newsDetails.style.display === 'none' || newsDetails.style.display === '') {
+                newsDetails.style.display = 'block';
+                btn.textContent = 'Show Less';
+                btn.style.background = 'linear-gradient(135deg, #dc3545, #c82333)';
+            } else {
+                newsDetails.style.display = 'none';
+                btn.textContent = 'See More';
+                btn.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+            }
+        }
+
+
+
+        subBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    subBtns.forEach(b => b.classList.remove('active'));
+    sections.forEach(sec => sec.classList.remove('active'));
+
+    btn.classList.add('active');
+    const section = document.getElementById(btn.dataset.section);
+    section.classList.add('active');
+
+    if (btn.dataset.section === 'alumni') {
+      setTimeout(() => {
+        initializeAlumniMap();
+        setTimeout(() => {
+          window.alumniMapInstance.invalidateSize(); // ensure map redraw
+        }, 200); // slight delay for layout to settle
+      }, 100); // initial delay for DOM visibility
+    }
+  });
+});
+
+
+
+
+const alumniData = [
+  // Example entries — replace or expand with your actual alumni data
+  //Academia
+  { lat: 1.3483, lng: 103.6831, name: "Dr. Zhiwei Jiang", position: "Assistant Professor", institution: "Nanyang Tehcnology University (NTU)", location: "Singapore", type: "academia", year: "PhD & PostDoc." },
+  { lat: 22.3080, lng: 39.1090, name: "Dr. Gyorgy Szekely", position: "Assistant Professor", institution: "KAUST", location: "Thuwal, Saudi Arabia", type: "academia", year: "Post Doc." },
+  { lat: 37.2431, lng: 127.0816, name: "Dr. Jeong Kim", position: "Associate Professor", institution: "Kyung Hee University", location: "Seoul, South Korea", type: "academia", year: "PhD 2018" },
+  { lat: 37.2431, lng: 127.0816, name: "Dr. Jaehoon Kim", position: "Associate Professor", institution: "Kyung Hee University", location: "Seoul, South Korea", type: "academia", year: "PhD 2018" },
+  { lat: 31.14511, lng: 121.41943, name: "Dr. Siyao Li", position: "Professor", institution: "East China of Science and Technology", location: "Shanghai, China", type: "academia", year: "PhD 2018" },
+  { lat: 31.2005, lng: 121.4245, name: "Dr. Ruijiao Dong", position: "Associate Professor", institution: "Shanghai Jiao Tong University", location: "Shanghai, China", type: "academia", year: "PostDoc." },
+  //Industry
+  { lat: 51.6667, lng: 7.0981, name: "Dr. Velichka Koleva", position: "Senior Engineer", institution: "Evonik Industries AG", location: "Dusseldorf, Germany", type: "industry", year: "PostDoc." },  
+  { lat: 51.5466, lng: 0.1535, name: "Dr. Jerry So", position: "VP of Membrane Manufacturing", institution: "Exactmer Ltd.", location: "London, United Kingdom", type: "industry", year: "PhD." },
+  { lat: 51.5466, lng: 0.1535, name: "Dr. Jet Yeo", position: "VP of Membrane Manufacturing", institution: "Exactmer Ltd.", location: "London, United Kingdom", type: "industry", year: "PhD." },
+  { lat: 51.5466, lng: 0.1535, name: "Dr. Anna", position: "VP of Membrane Manufacturing", institution: "Exactmer Ltd.", location: "London, United Kingdom", type: "industry", year: "PhD." },
+  { lat: 51.5466, lng: 0.1535, name: "Dr. P", position: "VP of Membrane Manufacturing", institution: "Exactmer Ltd.", location: "London, United Kingdom", type: "industry", year: "PhD." },
+  { lat: 51.5466, lng: 0.1535, name: "Dr. Daeok Kim", position: "", institution: "Exactmer Ltd.", location: "London, United Kingdom", type: "industry", year: "PhD." },
+  { lat: 51.5466, lng: 0.1535, name: "Dr. Marcus Cook", position: "VP of Membrane Manufacturing", institution: "Exactmer Ltd.", location: "London, United Kingdom", type: "industry", year: "PhD." },
+];
+
+function initializeAlumniMap() {
+  if (typeof L === 'undefined') {
+    setTimeout(initializeAlumniMap, 500);
+    return;
+  }
+
+  const container = document.getElementById('alumniMapStandalone');
+  if (!container) return;
+
+  if (window.alumniMapInstance) {
+    window.alumniMapInstance.remove();
+  }
+
+  window.alumniMapInstance = L.map(container, {
+    zoomSnap: 0.5,
+    zoomAnimation: true,
+    inertia: true
+  }).setView([20, 0], 2);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 18
+  }).addTo(window.alumniMapInstance);
+
+  const markers = L.markerClusterGroup({
+    chunkedLoading: true,
+    maxClusterRadius: 80,
+    iconCreateFunction: function(cluster) {
+  const count = cluster.getChildCount();
+  let size = 'small';
+  if (count > 10) size = 'large';
+  else if (count > 5) size = 'medium';
+
+  return L.divIcon({
+    html: `<div class="cluster-icon"><span>${count}</span></div>`,
+    className: `alumni-cluster alumni-cluster-${size}`,
+    iconSize: L.point(40, 40)
+  });
+}
+
+  });
+
+  const typeColors = {
+    academia: '#28a745',
+    industry: '#667eea',
+    research: '#ffc107'
+  };
+
+  alumniData.forEach(alumni => {
+    const marker = L.circleMarker([alumni.lat, alumni.lng], {
+      radius: 8,
+      fillColor: typeColors[alumni.type],
+      color: 'white',
+      weight: 3,
+      opacity: 1,
+      fillOpacity: 0.9
+    });
+
+    const popupContent = `
+      <div style="font-family: 'Inter', sans-serif; max-width: 250px;">
+        <h3 style="color: ${typeColors[alumni.type]}; margin: 0 0 10px 0; font-size: 1.1rem;">${alumni.name}</h3>
+        <p style="margin: 5px 0; font-weight: 600; color: #2c3e50;">${alumni.position}</p>
+        <p style="margin: 5px 0; color: #5a6c7d;">${alumni.institution}</p>
+        <p style="margin: 5px 0; color: #667eea; font-size: 0.9rem;">📍 ${alumni.location}</p>
+        <p style="margin: 5px 0 0 0; color: #667eea; font-size: 0.85rem; font-style: italic;">${alumni.year}</p>
+      </div>
+    `;
+
+    marker.bindPopup(popupContent);
+    markers.addLayer(marker);
+  });
+
+  window.alumniMapInstance.addLayer(markers);
+
+  setTimeout(() => {
+    window.alumniMapInstance.invalidateSize(true);
+    window.alumniMapInstance.setZoom(2);
+  }, 300);
+}
+
+
+
+
+const quizPool1 = [
+  {
+    q: "What does PEGylation do to a drug?",
+    options: ["Destroys it", "Makes it water-soluble", "Helps it stay in bloodstream longer", "Turns it into protein"],
+    a: 2
+  },
+  {
+    q: "Which university is Prof. Livingston affiliated with?",
+    options: ["Oxford", "Imperial", "Queen Mary University of London", "Cambridge"],
+    a: 2
+  },
+  {
+    q: "What is a membrane used for in chemistry?",
+    options: ["Making coffee", "Sound insulation", "Separating molecules", "Radiation shielding"],
+    a: 2
+  }
+];
+
+const quizPool2 = [
+  {
+    q: "Where is Queen Mary University located?",
+    options: ["Manchester", "London", "Bristol", "Leeds"],
+    a: 1
+  },
+  {
+    q: "What company collaborated with QMUL on PEG research?",
+    options: ["Pfizer", "Exactmer Ltd.", "Novartis", "Bayer"],
+    a: 1
+  },
+  {
+    q: "What faculty is Prof. Livingston part of?",
+    options: ["Engineering", "Law", "Dentistry", "Biology"],
+    a: 0
+  }
+];
+
+// Combine all quiz pools
+const allQuizzes = [quizPool1, quizPool2 /* add more sets here */];
+
+// Get today's quiz based on date
+const todayKey = new Date().toISOString().split('T')[0];
+const dayIndex = new Date().getDate() % allQuizzes.length;
+const todayQuiz = allQuizzes[dayIndex];
+
+let currentQuestionIndex = 0;
+let score = 0;
+let startTime;
+let playerName = "";
+
+function startQuiz() {
+  playerName = document.getElementById('playerName').value.trim();
+  if (!playerName) {
+    alert("Please enter your name.");
+    return;
+  }
+
+  startTime = Date.now();
+  currentQuestionIndex = 0;
+  score = 0;
+
+  document.getElementById('quiz-intro').style.display = 'none';
+  document.getElementById('quiz-area').style.display = 'block';
+  showQuestion();
+}
+
+function showQuestion() {
+  const area = document.getElementById('quiz-area');
+  area.innerHTML = "";
+
+  if (currentQuestionIndex >= todayQuiz.length) {
+    finishQuiz();
+    return;
+  }
+
+  const q = todayQuiz[currentQuestionIndex];
+
+  const block = document.createElement('div');
+  block.style.marginBottom = "2rem";
+  block.innerHTML = `
+    <h3>Q${currentQuestionIndex + 1}: ${q.q}</h3>
+    ${q.options.map((opt, i) => `
+      <label><input type="radio" name="answer" value="${i}"> ${opt}</label><br>
+    `).join('')}
+  `;
+
+  const submitBtn = document.createElement('button');
+  submitBtn.textContent = "Submit";
+  submitBtn.className = "news-expand-btn";
+  submitBtn.onclick = submitAnswer;
+
+  area.appendChild(block);
+  area.appendChild(submitBtn);
+}
+
+function submitAnswer() {
+  const selected = document.querySelector('input[name="answer"]:checked');
+  if (!selected) {
+    alert("Please select an answer.");
+    return;
+  }
+
+  const answerIndex = parseInt(selected.value);
+  if (answerIndex === todayQuiz[currentQuestionIndex].a) {
+    score++;
+  }
+
+  currentQuestionIndex++;
+  showQuestion();
+}
+
+function finishQuiz() {
+  const timeTaken = Math.round((Date.now() - startTime) / 1000);
+
+  const record = {
+    name: playerName,
+    time: timeTaken,
+    score,
+    date: todayKey
+  };
+
+  const allScores = JSON.parse(localStorage.getItem('quizScores') || "[]");
+  allScores.push(record);
+  localStorage.setItem('quizScores', JSON.stringify(allScores));
+
+  const area = document.getElementById('quiz-area');
+  area.innerHTML = `<p><strong>You have completed today’s quiz!</strong><br>
+    Score: ${score}/${todayQuiz.length}<br>
+    Time: ${timeTaken} seconds</p>`;
+
+  showLeaderboard();
+}
+
+function showLeaderboard() {
+  const board = document.getElementById('leaderboard');
+  const scores = JSON.parse(localStorage.getItem('quizScores') || "[]")
+    .filter(s => s.date === todayKey)
+    .sort((a, b) => a.time - b.time);
+
+  if (!scores.length) {
+    board.innerHTML = "<h3>No scores yet today.</h3>";
+    return;
+  }
+
+  board.innerHTML = `
+    <h3>Leaderboard for ${todayKey}</h3>
+    <table style="width:100%; border-collapse: collapse;">
+      <thead>
+        <tr><th style="text-align:left;">Name</th><th>Score</th><th>Time (s)</th></tr>
+      </thead>
+      <tbody>
+        ${scores.map(s => `<tr>
+          <td>${s.name}</td><td style="text-align:center;">${s.score}/${todayQuiz.length}</td><td style="text-align:center;">${s.time}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+
+
+
+
+
+    </script>
+
+    <!-- Leaflet and MarkerCluster JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+
+</body>
+</html>
+                        
